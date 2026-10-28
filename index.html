@@ -1,0 +1,996 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cardstock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one centered column. Deck chips, deck title, two tabs (Make / Study).
+   Every card face is drawn like a real ruled index card: red head line, pale blue rules. */
+:root {
+  --bg: #E8EDF4;
+  --surface: #F6F8FB;
+  --card: #FFFFFF;
+  --ink: #14213D;
+  --muted: #56637A;
+  --rule: #C3D5EA;
+  --line: #C9D3E1;
+  --soft: #DAE2EE;
+  --red: #D2453A;
+  --accent: #2447C2;
+  --accent-ink: #FFFFFF;
+  --good: #176F4A;
+  --good-bg: #DDF1E7;
+  --danger-bg: #FBE3E0;
+  --shadow: 0 1px 0 rgba(20, 33, 61, .06), 0 14px 26px -16px rgba(20, 33, 61, .45);
+  --lh: 2rem;
+  --veil: rgba(232, 237, 244, .5);
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10141B; --surface: #171C25; --card: #1D2431; --ink: #E7ECF5; --muted: #97A3B9;
+    --rule: #2B3A52; --line: #2C3545; --soft: #222B3B; --red: #FF7A6E; --accent: #86A2FF;
+    --accent-ink: #0E1626; --good: #52D39A; --good-bg: #173528; --danger-bg: #3B1E1F;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 14px 26px -16px rgba(0, 0, 0, .8);
+    --veil: rgba(16, 20, 27, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10141B; --surface: #171C25; --card: #1D2431; --ink: #E7ECF5; --muted: #97A3B9;
+  --rule: #2B3A52; --line: #2C3545; --soft: #222B3B; --red: #FF7A6E; --accent: #86A2FF;
+  --accent-ink: #0E1626; --good: #52D39A; --good-bg: #173528; --danger-bg: #3B1E1F;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 14px 26px -16px rgba(0, 0, 0, .8);
+  --veil: rgba(16, 20, 27, .55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button, input, textarea { font: inherit; color: inherit; }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand svg { flex: none; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em; line-height: 1; }
+.tag-line { color: var(--muted); font-size: .9rem; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: .75rem; color: var(--muted); }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: block; }
+.status[data-kind="cloud"] i { background: var(--good); }
+.status[data-kind="error"] i { background: var(--red); }
+
+/* Buttons */
+.btn {
+  min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); cursor: pointer; font-weight: 600; font-size: .95rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.good { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+.btn.danger { background: var(--danger-bg); border-color: var(--red); color: var(--red); }
+.btn.ghost { background: transparent; }
+.btn.small { min-height: 36px; padding: 0 12px; font-size: .85rem; }
+.btn.big { min-height: 56px; font-size: 1.05rem; }
+
+/* Deck chips */
+.decks { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  min-height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 500; max-width: 100%;
+}
+.chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.chip-n { font-size: .75rem; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip[aria-pressed="true"] .chip-n { color: var(--bg); opacity: .75; }
+.chip.add { border-style: dashed; background: transparent; color: var(--muted); }
+.chip.add:hover { color: var(--ink); border-color: var(--muted); }
+.newdeck { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.newdeck input {
+  min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--accent);
+  background: var(--card); width: min(100%, 260px);
+}
+
+/* Deck head */
+.deckhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; }
+.deck-title-wrap { min-width: 0; flex: 1 1 280px; display: flex; flex-direction: column; gap: 2px; }
+#deckName {
+  width: 100%; border: 0; border-bottom: 2px dashed transparent; background: transparent;
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 5vw, 2.1rem);
+  letter-spacing: -.02em; line-height: 1.2; padding: 2px 0; text-wrap: balance;
+}
+#deckName:hover, #deckName:focus { border-bottom-color: var(--line); outline: none; }
+#deckName:focus-visible { border-bottom-color: var(--accent); }
+.deck-meta { font-size: .8rem; color: var(--muted); }
+.deck-delete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.confirm-text { font-size: .9rem; color: var(--muted); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab {
+  min-height: 46px; padding: 0 18px; background: transparent; border: 0; cursor: pointer;
+  font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--ink); }
+
+/* Index card look */
+.paper {
+  background-color: var(--card);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px), var(--rule) var(--lh));
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--red);
+  border-radius: 6px;
+}
+.lbl { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* Make */
+#paneMake { display: flex; flex-direction: column; gap: 26px; }
+#addForm { display: flex; flex-direction: column; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.face-in { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+textarea.paper {
+  width: 100%; padding: 0 14px; line-height: var(--lh); font-family: var(--font-display);
+  font-size: 1.05rem; resize: vertical; background-attachment: local; display: block; min-height: 7rem;
+  box-shadow: var(--shadow);
+}
+textarea.paper:focus { outline: none; border-color: var(--accent); border-top-color: var(--red); box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.form-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.hint { font-size: .85rem; color: var(--muted); }
+#formMsg { font-size: .9rem; color: var(--ink); min-height: 1.4em; }
+h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+.listhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+#cardList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
+}
+.item .num { color: var(--muted); font-size: .75rem; padding-top: 4px; }
+.sides { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; min-width: 0; }
+.side { margin: 0; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.side .lbl { display: block; }
+.item-actions { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.tagpill { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--good); background: var(--good-bg); border-radius: 4px; padding: 3px 8px; }
+.item.editing .sides { gap: 12px 16px; }
+.item.editing textarea.paper { min-height: 6rem; }
+.none { color: var(--muted); padding: 22px 16px; border: 1px dashed var(--line); border-radius: 8px; text-align: center; }
+
+/* Study */
+#paneStudy { display: flex; flex-direction: column; gap: 22px; }
+.studybar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.prog { display: flex; align-items: center; gap: 12px; flex: 1 1 220px; min-width: 0; }
+.bar { flex: 1; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; min-width: 60px; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s ease; }
+.progtext { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.chk { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; min-height: 32px; }
+.chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+#studyCard { display: flex; flex-direction: column; gap: 18px; }
+.flip { position: relative; perspective: 1200px; cursor: pointer; width: 100%; max-width: 640px; margin-inline: auto; height: clamp(16rem, 46vw, 20rem); border-radius: 6px; }
+.inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, .7, .2, 1); }
+.flip.flipped .inner { transform: rotateY(180deg); }
+.flip.noanim .inner { transition: none; }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; padding: 0 18px; overflow: hidden; box-shadow: var(--shadow); }
+.face.back { transform: rotateY(180deg); }
+.cap { height: var(--lh); line-height: var(--lh); display: flex; justify-content: space-between; align-items: center; flex: none; }
+.cap .lbl { line-height: var(--lh); }
+.txt { flex: 1; min-height: 0; overflow-y: auto; line-height: var(--lh); font-family: var(--font-display); font-size: 1.3rem; font-weight: 400; white-space: pre-wrap; overflow-wrap: anywhere; text-wrap: pretty; }
+.actions { width: 100%; max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 10px; }
+.actions .main { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .sub { display: flex; justify-content: space-between; gap: 10px; }
+.keys { margin: 0; text-align: center; font-size: .8rem; color: var(--muted); font-family: var(--font-mono); }
+@media (hover: none) { .keys { display: none; } }
+
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 22px; max-width: 640px; width: 100%; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.box h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -.01em; text-wrap: balance; }
+.box p { margin: 0; color: var(--muted); }
+.missed { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.missed li { overflow-wrap: anywhere; }
+.box .row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 640px) {
+  .pair, .sides { grid-template-columns: 1fr; }
+  .item { grid-template-columns: 1fr; }
+  .item .num { padding-top: 0; }
+  .item-actions { grid-column: 1; }
+  .face { padding: 0 14px; }
+  .txt { font-size: 1.15rem; }
+}
+/* Guided tour: four blurred panels leave a clear window over the one element being explained */
+.top-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.tour { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+.tip, .hole { pointer-events: auto; }
+.veil { pointer-events: auto; position: fixed; background: var(--veil); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .veil { background: var(--bg); opacity: .94; }
+}
+.hole { position: fixed; border-radius: 10px; border: 2px solid var(--accent); box-shadow: 0 0 26px -4px var(--accent); }
+.tour.animate .veil, .tour.animate .hole { transition: top .28s ease, left .28s ease, width .28s ease, height .28s ease; }
+.tip {
+  position: fixed; display: flex; flex-direction: column; gap: 10px; max-width: calc(100vw - 32px);
+  background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--red); border-radius: 8px;
+  padding: 14px 16px; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .5);
+}
+.tip-top { display: flex; align-items: center; gap: 12px; }
+.tip-count { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+.tip h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; letter-spacing: -.01em; text-wrap: balance; }
+.tip p { margin: 0; font-size: .95rem; line-height: 1.55; }
+.tip-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.tip-actions .grp { display: flex; gap: 8px; }
+.hole.live { pointer-events: none; }
+.tip-hint { margin: 0; font-family: var(--font-mono); font-size: .8rem; color: var(--accent); }
+.tip-hint.ok { color: var(--good); }
+.tip.compact { gap: 6px; padding: 10px 14px; }
+.tip.compact h3 { font-size: 1.05rem; }
+.tip.compact #tourText { display: none; }
+.tip .more { align-self: flex-start; }
+.skip { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; min-height: 36px; padding: 0 4px; font-size: .85rem; }
+.skip:hover { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  .inner, .bar i, .tour.animate .veil, .tour.animate .hole { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="28" viewBox="0 0 34 28" aria-hidden="true">
+        <rect x="6" y="1" width="26" height="18" rx="2.5" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="2" y="8" width="26" height="18" rx="2.5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.5"/>
+        <line x1="2" y1="13.5" x2="28" y2="13.5" stroke="var(--red)" stroke-width="1.5"/>
+        <line x1="6" y1="18" x2="24" y2="18" stroke="var(--rule)" stroke-width="1.5"/>
+        <line x1="6" y1="22" x2="18" y2="22" stroke="var(--rule)" stroke-width="1.5"/>
+      </svg>
+      <div>
+        <h1>Cardstock</h1>
+        <div class="tag-line">Flashcards for studying</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="btn small" id="tourBtn" type="button" data-act="tour">How to use</button>
+      <div class="status" id="status" data-kind="local" role="status"><i></i><span id="statusText">Saved in this browser</span></div>
+    </div>
+  </header>
+
+  <nav class="decks" id="decks" aria-label="Decks"></nav>
+
+  <div id="empty" hidden>
+    <div class="box">
+      <h3>Start with a deck</h3>
+      <p>A deck holds the cards for one subject, like a chapter or an exam. Make one with the New deck button above.</p>
+    </div>
+  </div>
+
+  <div class="deckhead" id="deckhead">
+    <div class="deck-title-wrap">
+      <input id="deckName" type="text" maxlength="60" aria-label="Deck name" autocomplete="off">
+      <div class="deck-meta mono" id="deckMeta"></div>
+    </div>
+    <div class="deck-delete" id="deckDelete"></div>
+  </div>
+
+  <div class="tabs" id="tabs" role="tablist">
+    <button class="tab" id="tabMake" role="tab" type="button" data-act="tab-make" aria-selected="true">Make cards</button>
+    <button class="tab" id="tabStudy" role="tab" type="button" data-act="tab-study" aria-selected="false">Study</button>
+  </div>
+
+  <section id="paneMake">
+    <form id="addForm" autocomplete="off">
+      <div class="pair">
+        <label class="face-in"><span class="lbl">Front</span>
+          <textarea class="paper" id="front" rows="3" placeholder="Question, term or prompt"></textarea></label>
+        <label class="face-in"><span class="lbl">Back</span>
+          <textarea class="paper" id="back" rows="3" placeholder="Answer or definition"></textarea></label>
+      </div>
+      <div class="form-row">
+        <button class="btn primary" type="submit">Add card</button>
+        <span class="hint">Ctrl or ⌘ + Enter adds the card from either box.</span>
+      </div>
+      <div id="formMsg" aria-live="polite"></div>
+    </form>
+    <div>
+      <div class="listhead"><h2 id="listTitle">Cards in this deck</h2></div>
+      <ul id="cardList"></ul>
+    </div>
+  </section>
+
+  <section id="paneStudy" hidden>
+    <div class="studybar" id="studyBar">
+      <div class="prog"><div class="bar"><i id="barFill"></i></div><span class="progtext mono" id="progText"></span></div>
+      <div class="opts">
+        <label class="chk"><input type="checkbox" id="optShuffle"> Shuffle</label>
+        <label class="chk"><input type="checkbox" id="optLearning"> Skip learned cards</label>
+      </div>
+    </div>
+
+    <div id="studyCard">
+      <div class="flip" id="flip" role="button" tabindex="0" aria-pressed="false" aria-label="Flashcard. Press space to flip." data-act="flip">
+        <div class="inner">
+          <div class="face front paper" id="faceFront">
+            <div class="cap"><span class="lbl">Front</span><span class="lbl">Tap to flip</span></div>
+            <div class="txt" id="tFront"></div>
+          </div>
+          <div class="face back paper" id="faceBack" aria-hidden="true">
+            <div class="cap"><span class="lbl">Back</span><span class="lbl">Tap to flip</span></div>
+            <div class="txt" id="tBack"></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="main">
+          <button class="btn big" type="button" data-act="again">Still learning</button>
+          <button class="btn big good" type="button" data-act="got">Got it</button>
+        </div>
+        <div class="sub">
+          <button class="btn small ghost" type="button" data-act="prev">← Back</button>
+          <button class="btn small ghost" type="button" data-act="skip">Skip →</button>
+        </div>
+        <p class="keys">Space flips · ← → move · 1 still learning · 2 got it</p>
+      </div>
+    </div>
+
+    <div class="box" id="summary" hidden>
+      <h3 id="sumTitle"></h3>
+      <p id="sumText"></p>
+      <ul class="missed" id="sumMissed"></ul>
+      <div class="row">
+        <button class="btn primary" type="button" data-act="missed" id="btnMissed">Study missed cards</button>
+        <button class="btn" type="button" data-act="restart">Start over</button>
+      </div>
+    </div>
+
+    <div class="box" id="studyEmpty" hidden>
+      <h3 id="emptyTitle"></h3>
+      <p id="emptyText"></p>
+      <div class="row" id="emptyActions"></div>
+    </div>
+  </section>
+</div>
+
+<div class="tour" id="tour" hidden>
+  <div class="veil"></div><div class="veil"></div><div class="veil"></div><div class="veil"></div>
+  <div class="hole" id="tourHole"></div>
+  <div class="tip" id="tourTip" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourText">
+    <div class="tip-top"><span class="tip-count mono" id="tourCount"></span><div class="bar"><i id="tourFill"></i></div></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <p class="tip-hint" id="tourHint" aria-live="polite" hidden></p>
+    <button type="button" class="skip more" id="tourMore" data-act="tour-more" hidden>Show instructions</button>
+    <div class="tip-actions">
+      <button type="button" class="skip" id="tourSkip" data-act="tour-skip">Skip tour</button>
+      <div class="grp">
+        <button class="btn small ghost" type="button" id="tourBack" data-act="tour-back">Back</button>
+        <button class="btn small primary" type="button" id="tourNext" data-act="tour-next">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'cardstock.v1';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var uid = function () { return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4); };
+
+  var S = null;
+  var ui = { tab: 'make', editing: null, confirmCard: null, confirmDeck: false, newDeck: false, onlyLearning: false, shuffle: false, sess: null };
+
+  /* ---------- data ---------- */
+  function seed() {
+    var mk = function (f, b) { return { id: uid(), front: f, back: b, status: 'new' }; };
+    var id = uid();
+    return {
+      active: id,
+      decks: [{
+        id: id, name: 'Example: Cell biology', cards: [
+          mk('What does the mitochondrion produce?', 'ATP, the cell’s main usable energy currency, through cellular respiration.'),
+          mk('Which organelle packages proteins for export?', 'The Golgi apparatus modifies, sorts and packages proteins and lipids.'),
+          mk('Where are ribosomes found?', 'Free in the cytoplasm and attached to the rough endoplasmic reticulum.'),
+          mk('Function of the cell membrane', 'A selectively permeable barrier that controls what enters and leaves the cell.'),
+          mk('Mitosis vs meiosis', 'Mitosis makes two identical diploid cells. Meiosis makes four genetically distinct haploid cells.'),
+          mk('Where does photosynthesis happen?', 'In chloroplasts, where chlorophyll turns light, water and CO₂ into glucose and O₂.')
+        ]
+      }]
+    };
+  }
+  function normalize(d) {
+    if (!d || !Array.isArray(d.decks)) return null;
+    d.decks = d.decks.filter(function (x) { return x && x.id; }).map(function (x) {
+      return {
+        id: String(x.id), name: String(x.name || 'Untitled deck'),
+        cards: (Array.isArray(x.cards) ? x.cards : []).filter(function (c) { return c && c.id; }).map(function (c) {
+          return { id: String(c.id), front: String(c.front || ''), back: String(c.back || ''), status: (c.status === 'known' || c.status === 'learning') ? c.status : 'new' };
+        })
+      };
+    });
+    if (!d.decks.some(function (x) { return x.id === d.active; })) d.active = d.decks[0] ? d.decks[0].id : null;
+    return d;
+  }
+  function deck() { return S.decks.find(function (d) { return d.id === S.active; }) || null; }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /* ---------- saving ---------- */
+  var ref = null, saveTimer = null, saving = false, touched = false;
+  function setStatus(kind) {
+    var el = $('#status');
+    el.dataset.kind = kind;
+    $('#statusText').textContent = kind === 'cloud' ? 'Saved to your account' : kind === 'error' ? 'Not saved yet. Will retry' : 'Saved in this browser';
+  }
+  function persist() {
+    touched = true;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 500);
+  }
+  async function flush() {
+    if (!ref) { setStatus('local'); return; }
+    if (saving) { saveTimer = setTimeout(flush, 300); return; }
+    saving = true;
+    try { await ref.set(clone(S)); setStatus('cloud'); }
+    catch (e) { setStatus('error'); }
+    saving = false;
+  }
+  async function connect() {
+    try {
+      var c = window.claude;
+      if (!c || !c.use) return;
+      var got = await Promise.all([c.use('db'), c.use('user')]);
+      var db = got[0], user = got[1];
+      if (!db || !user) return;
+      var id = await user.id();
+      if (!id) return;
+      var r = db.collection('data/users/' + id).doc('cardstock');
+      var snap = await r.get();
+      if (snap.exists) {
+        if (!touched) {
+          var remote = normalize(clone(snap.data()));
+          if (remote) { S = remote; ui.sess = null; renderAll(); }
+        }
+        setStatus('cloud');
+      }
+      ref = r;
+    } catch (e) { /* stay on browser storage */ }
+  }
+
+  /* ---------- rendering ---------- */
+  function renderDecks() {
+    var el = $('#decks');
+    var h = S.decks.map(function (d) {
+      return '<button type="button" class="chip" data-act="deck" data-id="' + esc(d.id) + '" aria-pressed="' + (d.id === S.active) + '">' +
+        '<span class="chip-name">' + esc(d.name) + '</span><span class="chip-n mono">' + d.cards.length + '</span></button>';
+    }).join('');
+    if (ui.newDeck) {
+      h += '<form class="newdeck" data-form="newdeck"><input id="newDeckName" type="text" maxlength="60" placeholder="Deck name" aria-label="New deck name" autocomplete="off">' +
+        '<button class="btn primary" type="submit">Create</button><button class="btn ghost" type="button" data-act="cancel-new">Cancel</button></form>';
+    } else {
+      h += '<button type="button" class="chip add" data-act="new-deck">+ New deck</button>';
+    }
+    el.innerHTML = h;
+    if (ui.newDeck) { var i = $('#newDeckName'); if (i) i.focus(); }
+  }
+  function renderHead() {
+    var d = deck(), has = !!d;
+    $('#empty').hidden = has;
+    $('#deckhead').hidden = !has;
+    $('#tabs').hidden = !has;
+    $('#paneMake').hidden = !has || ui.tab !== 'make';
+    $('#paneStudy').hidden = !has || ui.tab !== 'study';
+    $('#tabMake').setAttribute('aria-selected', String(ui.tab === 'make'));
+    $('#tabStudy').setAttribute('aria-selected', String(ui.tab === 'study'));
+    if (!has) return;
+    var inp = $('#deckName');
+    if (document.activeElement !== inp) inp.value = d.name;
+    var known = d.cards.filter(function (c) { return c.status === 'known'; }).length;
+    $('#deckMeta').textContent = d.cards.length + (d.cards.length === 1 ? ' card' : ' cards') + ' · ' + known + ' learned';
+    $('#deckDelete').innerHTML = ui.confirmDeck
+      ? '<span class="confirm-text">Delete this deck and its ' + d.cards.length + ' cards?</span><button class="btn danger small" type="button" data-act="confirm-del-deck">Delete deck</button><button class="btn ghost small" type="button" data-act="cancel-del-deck">Keep</button>'
+      : '<button class="btn ghost small" type="button" data-act="del-deck">Delete deck</button>';
+  }
+  function renderList() {
+    var d = deck(); if (!d) return;
+    $('#listTitle').textContent = 'Cards in this deck (' + d.cards.length + ')';
+    var ul = $('#cardList');
+    if (!d.cards.length) { ul.innerHTML = '<li class="none">No cards yet. Write a front and a back above, then press Add card.</li>'; return; }
+    ul.innerHTML = d.cards.map(function (c, i) {
+      var n = String(i + 1).padStart(2, '0');
+      if (ui.editing === c.id) {
+        return '<li class="item editing" data-id="' + esc(c.id) + '"><span class="num mono">' + n + '</span><div>' +
+          '<div class="sides"><label class="face-in"><span class="lbl">Front</span><textarea class="paper" data-f="front" rows="3">' + esc(c.front) + '</textarea></label>' +
+          '<label class="face-in"><span class="lbl">Back</span><textarea class="paper" data-f="back" rows="3">' + esc(c.back) + '</textarea></label></div></div>' +
+          '<div class="item-actions"><button class="btn primary small" type="button" data-act="save-edit">Save</button><button class="btn ghost small" type="button" data-act="cancel-edit">Cancel</button></div></li>';
+      }
+      var del = ui.confirmCard === c.id
+        ? '<button class="btn danger small" type="button" data-act="confirm-del">Delete card</button><button class="btn ghost small" type="button" data-act="keep">Keep</button>'
+        : '<button class="btn ghost small" type="button" data-act="edit">Edit</button><button class="btn ghost small" type="button" data-act="del">Delete</button>';
+      return '<li class="item" data-id="' + esc(c.id) + '"><span class="num mono">' + n + '</span>' +
+        '<div class="sides"><p class="side"><span class="lbl">Front</span>' + esc(c.front) + '</p><p class="side"><span class="lbl">Back</span>' + esc(c.back) + '</p></div>' +
+        '<div class="item-actions">' + (c.status === 'known' ? '<span class="tagpill">Learned</span>' : '') + del + '</div></li>';
+    }).join('');
+  }
+
+  /* ---------- study ---------- */
+  function newSession(ids) {
+    var d = deck();
+    var q = d.cards.filter(function (c) {
+      return ids ? ids.indexOf(c.id) !== -1 : (!ui.onlyLearning || c.status !== 'known');
+    }).map(function (c) { return c.id; });
+    if (ui.shuffle) {
+      for (var i = q.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = q[i]; q[i] = q[j]; q[j] = t; }
+    }
+    return { queue: q, i: 0, missed: [], flipped: false };
+  }
+  function renderStudy() {
+    var d = deck(); if (!d) return;
+    if (!ui.sess) ui.sess = newSession();
+    var s = ui.sess, n = s.queue.length;
+    var showCard = n > 0 && s.i < n;
+    var showSum = n > 0 && s.i >= n;
+    $('#studyCard').hidden = !showCard;
+    $('#summary').hidden = !showSum;
+    $('#studyEmpty').hidden = n > 0;
+    $('#studyBar').hidden = n === 0 && d.cards.length === 0;
+    $('#optShuffle').checked = ui.shuffle;
+    $('#optLearning').checked = ui.onlyLearning;
+    $('#barFill').style.width = (n ? Math.min(100, (s.i / n) * 100) : 0) + '%';
+    $('#progText').textContent = n ? (showCard ? 'Card ' + (s.i + 1) + ' of ' + n : n + ' of ' + n + ' done') : '0 cards';
+
+    if (n === 0) {
+      if (d.cards.length === 0) {
+        $('#emptyTitle').textContent = 'This deck has no cards yet';
+        $('#emptyText').textContent = 'Add a few cards, then come back to study them.';
+        $('#emptyActions').innerHTML = '<button class="btn primary" type="button" data-act="goto-make">Make cards</button>';
+      } else {
+        $('#emptyTitle').textContent = 'Every card here is marked learned';
+        $('#emptyText').textContent = 'Turn off Skip learned cards to go through the whole deck again.';
+        $('#emptyActions').innerHTML = '<button class="btn primary" type="button" data-act="study-all">Study all cards</button>';
+      }
+      return;
+    }
+    if (showSum) {
+      var k = s.missed.length;
+      $('#sumTitle').textContent = k === 0 ? 'Every card marked learned' : (n - k) + ' of ' + n + ' learned this round';
+      $('#sumText').textContent = k === 0 ? 'Nothing left to review in this round.' : 'Still learning:';
+      $('#sumMissed').hidden = k === 0;
+      $('#sumMissed').innerHTML = s.missed.map(function (id) {
+        var c = d.cards.find(function (x) { return x.id === id; });
+        return c ? '<li>' + esc(c.front) + '</li>' : '';
+      }).join('');
+      $('#btnMissed').hidden = k === 0;
+      $('#btnMissed').textContent = 'Study the ' + k + ' missed';
+      return;
+    }
+    var c = d.cards.find(function (x) { return x.id === s.queue[s.i]; });
+    if (!c) { go(1); return; }
+    var fl = $('#flip');
+    fl.classList.add('noanim');
+    fl.classList.remove('flipped');
+    s.flipped = false;
+    fl.setAttribute('aria-pressed', 'false');
+    $('#faceFront').setAttribute('aria-hidden', 'false');
+    $('#faceBack').setAttribute('aria-hidden', 'true');
+    $('#tFront').textContent = c.front;
+    $('#tBack').textContent = c.back;
+    $('#tFront').scrollTop = 0; $('#tBack').scrollTop = 0;
+    void fl.offsetWidth;
+    fl.classList.remove('noanim');
+  }
+  function flip() {
+    var s = ui.sess;
+    if (!s || s.i >= s.queue.length) return;
+    s.flipped = !s.flipped;
+    var fl = $('#flip');
+    fl.classList.toggle('flipped', s.flipped);
+    fl.setAttribute('aria-pressed', String(s.flipped));
+    $('#faceFront').setAttribute('aria-hidden', String(s.flipped));
+    $('#faceBack').setAttribute('aria-hidden', String(!s.flipped));
+  }
+  function go(delta) {
+    var s = ui.sess; if (!s) return;
+    s.i = Math.max(0, Math.min(s.queue.length, s.i + delta));
+    renderStudy();
+  }
+  function mark(status) {
+    var s = ui.sess;
+    if (!s || s.i >= s.queue.length) return;
+    var id = s.queue[s.i];
+    var c = deck().cards.find(function (x) { return x.id === id; });
+    if (!c) return;
+    c.status = status;
+    if (status === 'learning') { if (s.missed.indexOf(id) === -1) s.missed.push(id); }
+    else s.missed = s.missed.filter(function (x) { return x !== id; });
+    persist();
+    renderHead();
+    go(1);
+  }
+
+  /* ---------- actions ---------- */
+  function renderAll() {
+    renderDecks(); renderHead(); renderList();
+    if (ui.tab === 'study') renderStudy();
+  }
+  function resetTransient() { ui.editing = null; ui.confirmCard = null; ui.confirmDeck = false; ui.sess = null; }
+  function addCard() {
+    var f = $('#front'), b = $('#back');
+    var front = f.value.trim(), back = b.value.trim();
+    if (!front || !back) {
+      $('#formMsg').textContent = !front ? 'Write something on the front first.' : 'Add the answer on the back first.';
+      (!front ? f : b).focus();
+      return;
+    }
+    var d = deck(); if (!d) return;
+    d.cards.push({ id: uid(), front: front, back: back, status: 'new' });
+    f.value = ''; b.value = '';
+    $('#formMsg').textContent = 'Card added. This deck now has ' + d.cards.length + '.';
+    f.focus();
+    ui.sess = null;
+    persist(); renderHead(); renderDecks(); renderList();
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (!t) return;
+    var act = t.dataset.act;
+    var li = t.closest('li[data-id]');
+    var cid = li ? li.dataset.id : null;
+    var d = deck();
+    switch (act) {
+      case 'tab-make': ui.tab = 'make'; renderHead(); break;
+      case 'tab-study': ui.tab = 'study'; renderHead(); renderStudy(); break;
+      case 'goto-make': ui.tab = 'make'; renderHead(); break;
+      case 'deck':
+        S.active = t.dataset.id; resetTransient(); persist(); renderAll(); break;
+      case 'new-deck': ui.newDeck = true; renderDecks(); break;
+      case 'cancel-new': ui.newDeck = false; renderDecks(); break;
+      case 'del-deck': ui.confirmDeck = true; renderHead(); break;
+      case 'cancel-del-deck': ui.confirmDeck = false; renderHead(); break;
+      case 'confirm-del-deck':
+        S.decks = S.decks.filter(function (x) { return x.id !== S.active; });
+        S.active = S.decks[0] ? S.decks[0].id : null;
+        resetTransient(); persist(); renderAll(); break;
+      case 'edit':
+        ui.editing = cid; ui.confirmCard = null; renderList();
+        var ta = $('#cardList li[data-id="' + cid + '"] textarea'); if (ta) ta.focus();
+        break;
+      case 'cancel-edit': ui.editing = null; renderList(); break;
+      case 'save-edit':
+        if (!li || !d) break;
+        var fv = li.querySelector('[data-f="front"]').value.trim();
+        var bv = li.querySelector('[data-f="back"]').value.trim();
+        if (!fv || !bv) break;
+        var card = d.cards.find(function (x) { return x.id === cid; });
+        if (card) { card.front = fv; card.back = bv; }
+        ui.editing = null; ui.sess = null; persist(); renderList(); break;
+      case 'del': ui.confirmCard = cid; renderList(); break;
+      case 'keep': ui.confirmCard = null; renderList(); break;
+      case 'confirm-del':
+        if (!d) break;
+        d.cards = d.cards.filter(function (x) { return x.id !== cid; });
+        ui.confirmCard = null; ui.sess = null;
+        persist(); renderHead(); renderDecks(); renderList(); break;
+      case 'flip': flip(); break;
+      case 'got': mark('known'); break;
+      case 'again': mark('learning'); break;
+      case 'prev': go(-1); break;
+      case 'skip': go(1); break;
+      case 'restart': ui.sess = newSession(); renderStudy(); break;
+      case 'missed': ui.sess = newSession(ui.sess ? ui.sess.missed.slice() : []); renderStudy(); break;
+      case 'study-all':
+        ui.onlyLearning = false; ui.sess = null; renderStudy(); break;
+      case 'tour': startTour(); break;
+      case 'tour-next': tourNext(); break;
+      case 'tour-back': if (tour.i > 0) showStep(tour.i - 1); break;
+      case 'tour-skip': endTour(); break;
+      case 'tour-more': tour.expanded = !tour.expanded; layoutTour(); break;
+    }
+  });
+
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f.id === 'addForm') { e.preventDefault(); addCard(); return; }
+    if (f.dataset && f.dataset.form === 'newdeck') {
+      e.preventDefault();
+      var inp = $('#newDeckName'), name = inp.value.trim();
+      if (!name) { inp.focus(); return; }
+      var nd = { id: uid(), name: name, cards: [] };
+      S.decks.push(nd); S.active = nd.id;
+      ui.newDeck = false; ui.tab = 'make'; resetTransient();
+      persist(); renderAll();
+      var fr = $('#front'); if (fr) fr.focus();
+    }
+  });
+
+  $('#deckName').addEventListener('change', function (e) {
+    var d = deck(); if (!d) return;
+    var v = e.target.value.trim();
+    if (v) {
+      d.name = v;
+      var chip = $('#decks .chip[data-id="' + d.id + '"] .chip-name');
+      if (chip) chip.textContent = v;
+      persist();
+    } else e.target.value = d.name;
+  });
+  $('#deckName').addEventListener('keydown', function (e) { if (e.key === 'Enter') e.target.blur(); });
+  $('#optShuffle').addEventListener('change', function (e) { ui.shuffle = e.target.checked; ui.sess = null; renderStudy(); });
+  $('#optLearning').addEventListener('change', function (e) { ui.onlyLearning = e.target.checked; ui.sess = null; renderStudy(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (tour.on && tourKey(e)) return;
+    if (e.key === 'Escape' && ui.newDeck) { ui.newDeck = false; renderDecks(); return; }
+    if (e.key === 'Escape' && ui.editing) { ui.editing = null; renderList(); return; }
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && t.closest('#addForm')) { e.preventDefault(); addCard(); return; }
+    if (t.closest('input,textarea,select,button')) return;
+    if (ui.tab !== 'study' || $('#paneStudy').hidden || $('#studyCard').hidden) return;
+    if (e.key === ' ' || (e.key === 'Enter' && t.id === 'flip')) { e.preventDefault(); flip(); }
+    else if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+    else if (e.key === '1') mark('learning');
+    else if (e.key === '2') mark('known');
+  });
+
+  /* ---------- guided tour ---------- */
+  var TOUR_KEY = 'cardstock.tour.v1';
+  var T = $('#tour');
+  var tour = { on: false, i: 0, el: null, prevTab: 'make', timer: null, raf: 0, base: 0, completed: {}, expanded: false };
+  function ensureMake() { if (ui.tab !== 'make') { ui.tab = 'make'; renderHead(); } }
+  function ensureStudy() { if (ui.tab !== 'study') { ui.tab = 'study'; renderHead(); renderStudy(); } }
+  var MISSING = 'This part appears once you have a deck with cards.';
+  var STEPS = [
+    { find: function () { return $('.top'); }, before: ensureMake,
+      title: 'Welcome to Cardstock',
+      text: 'Cardstock helps you study with flashcards. You make decks of cards, then flip through them and mark what you know. This short tour covers each part of the page, one at a time. Press Next to continue. You can reopen the tour any time with the How to use button.' },
+    { find: function () { return $('#decks'); }, before: ensureMake,
+      title: 'Your decks',
+      text: 'A deck is a set of cards on one subject, like a chapter or an exam. Each button here is a deck, and the small number on it is how many cards it holds. Click a deck to switch to it. The dark button is the deck you are working in. The example deck is there so you can see how things look, and you can delete it later.' },
+    { find: function () { return $('#decks .newdeck') || $('#decks .chip.add') || $('#decks'); }, before: ensureMake,
+      base: function () { return S.decks.length; },
+      done: function (base) { return S.decks.length > base; },
+      hint: 'Your turn: click New deck, type a name, then press Enter.',
+      success: 'Deck created. Moving on.',
+      title: 'Make your first deck',
+      text: 'Now make a deck of your own. Click New deck, type a name such as the subject you are studying (Biology or Spanish verbs, for example), then press Enter or Create. One deck per subject keeps each study session focused.' },
+    { find: function () { return $('#deckhead'); }, before: ensureMake,
+      title: 'Rename, count and delete',
+      text: 'Your new deck opens here. Click the big title to rename it, then press Enter. Below it you can see how many cards the deck has and how many you have marked as learned. Delete deck removes the whole deck, and it asks you to confirm first so you cannot lose cards by accident.' },
+    { find: function () { return $('#tabs'); }, before: ensureMake,
+      title: 'Two modes',
+      text: 'Make cards is where you write and manage your cards. Study is where you practise them. Switch between the two whenever you like.' },
+    { find: function () { return $('#addForm'); }, before: ensureMake,
+      base: function () { var d = deck(); return d ? d.cards.length : 0; },
+      done: function (base) { var d = deck(); return !!d && d.cards.length > base; },
+      hint: 'Your turn: fill in both boxes, then press Add card.',
+      success: 'Card added. Moving on.',
+      title: 'Write your first card',
+      text: 'Type a question, term or prompt on the front and the answer on the back. Both sides are required. Press Add card, or hold Ctrl (⌘ on a Mac) and press Enter. The boxes clear and the cursor returns to the front, ready for the next card.' },
+    { find: function () { return $('#cardList .item') || $('#cardList'); }, before: ensureMake,
+      title: 'Your card list',
+      text: 'Your card now shows up here, along with every other card in the deck, each with its number. Edit lets you fix the wording, and Save keeps the change. Delete asks you to confirm before it removes a card. A green Learned tag appears on cards you have marked Got it while studying.' },
+    { find: function () { return $('#tabStudy'); }, before: ensureMake,
+      title: 'Ready to practise',
+      text: 'Once a deck has a few cards, open the Study tab. The next steps open it for you.' },
+    { find: function () { return $('#studyBar'); }, before: ensureStudy,
+      title: 'Progress and options',
+      text: 'The bar shows how far you are through the current round. Shuffle mixes up the order of the cards. Skip learned cards leaves out anything you have already marked Got it, so each round covers only what is left.' },
+    { find: function () { return $('#flip'); },
+      before: function () { ensureStudy(); renderStudy(); },
+      demo: function () { if (tour.on && STEPS[tour.i].demo) flip(); },
+      title: 'Flip the card',
+      text: 'Each card starts on its front. Try to recall the answer in your head first. Then click the card, tap it, or press Space to flip it over and check. The tour flips this one for you in a moment.' },
+    { find: function () { return $('.actions .main'); }, before: ensureStudy,
+      title: 'Mark how you did',
+      text: 'Press Got it if you knew the answer, or Still learning if you missed it or were unsure. The keys 2 and 1 do the same. Your mark is saved on the card, and the learned count at the top of the deck updates.' },
+    { find: function () { return $('.actions .sub'); }, before: ensureStudy,
+      title: 'Move around',
+      text: 'Back returns to the previous card. Skip moves on without marking anything. The left and right arrow keys do the same.' },
+    { find: function () { return $('.prog'); }, before: ensureStudy,
+      title: 'Finish a round',
+      text: 'After the last card you get a summary of the round. It lists the cards you marked Still learning, with a button to study just those again, or to start the whole round over.' },
+    { find: function () { return $('#status'); }, before: ensureStudy,
+      title: 'Automatic saving',
+      text: 'Everything you do is saved by itself. Saved to your account means your decks follow you across devices. Saved in this browser means they stay on this device only. That is the whole tour. Press Done and start making cards.' }
+  ];
+  function isVisible(el) {
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  }
+  function place(el, t, l, w, h) {
+    el.style.top = t + 'px'; el.style.left = l + 'px';
+    el.style.width = Math.max(0, w) + 'px'; el.style.height = Math.max(0, h) + 'px';
+  }
+  function layoutTour() {
+    if (!tour.on) return;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    tour.el = STEPS[tour.i].find();
+    var v = T.querySelectorAll('.veil'), hole = $('#tourHole'), tip = $('#tourTip');
+    var tw = Math.min(380, vw - 32);
+    tip.style.width = tw + 'px';
+    tip.classList.remove('compact');
+    var th = tip.offsetHeight;
+    if (!isVisible(tour.el)) {
+      $('#tourMore').hidden = true;
+      place(v[0], 0, 0, vw, vh); place(v[1], 0, 0, 0, 0); place(v[2], 0, 0, 0, 0); place(v[3], 0, 0, 0, 0);
+      hole.hidden = true;
+      tip.style.left = Math.max(16, (vw - tw) / 2) + 'px';
+      tip.style.top = Math.max(12, (vh - th) / 2) + 'px';
+      return;
+    }
+    var r = tour.el.getBoundingClientRect(), pad = 8;
+    var top = Math.max(0, r.top - pad), left = Math.max(0, r.left - pad);
+    var right = Math.min(vw, r.right + pad), bottom = Math.min(vh, r.bottom + pad);
+    place(v[0], 0, 0, vw, top);
+    place(v[1], bottom, 0, vw, vh - bottom);
+    place(v[2], top, 0, left, bottom - top);
+    place(v[3], top, right, vw - right, bottom - top);
+    hole.hidden = false;
+    place(hole, top, left, right - left, bottom - top);
+    var tx = Math.min(Math.max(16, left), vw - tw - 16);
+    /* Keep the tip off the highlighted area. If it cannot sit above or below at full size,
+       shrink it to a short bar so the controls underneath stay clickable. */
+    var spot = function (h) {
+      if (bottom + h + 16 <= vh) return bottom + 16;
+      if (top - h - 16 >= 0) return top - h - 16;
+      return null;
+    };
+    var ty = spot(th);
+    var more = $('#tourMore');
+    more.hidden = ty !== null;
+    if (ty === null && !tour.expanded) {
+      tip.classList.add('compact');
+      th = tip.offsetHeight;
+      ty = spot(th);
+    }
+    if (ty === null) ty = Math.max(12, vh - th - 12);
+    more.textContent = tour.expanded ? 'Hide instructions' : 'Show instructions';
+    tip.style.left = tx + 'px';
+    tip.style.top = ty + 'px';
+  }
+  function showStep(i, first) {
+    clearTimeout(tour.timer);
+    tour.i = i;
+    tour.expanded = false;
+    var st = STEPS[i];
+    if (st.before) st.before();
+    tour.base = st.base ? st.base() : 0;
+    tour.el = st.find();
+    var ok = isVisible(tour.el);
+    $('#tourCount').textContent = (i + 1) + ' / ' + STEPS.length;
+    $('#tourFill').style.width = ((i + 1) / STEPS.length * 100) + '%';
+    $('#tourTitle').textContent = st.title;
+    $('#tourText').textContent = st.text + (ok ? '' : ' ' + MISSING);
+    $('#tourBack').hidden = i === 0;
+    var inter = !!st.done && !tour.completed[i];
+    var hint = $('#tourHint');
+    hint.hidden = !st.done;
+    hint.className = 'tip-hint' + (inter ? '' : ' ok');
+    hint.textContent = inter ? st.hint : (st.done ? 'Already done. Press Next.' : '');
+    $('#tourHole').classList.toggle('live', inter);
+    var nb = $('#tourNext');
+    nb.textContent = inter ? 'Skip step' : (i === STEPS.length - 1 ? 'Done' : 'Next');
+    nb.classList.toggle('primary', !inter);
+    nb.classList.toggle('ghost', inter);
+    var tip = $('#tourTip');
+    tip.style.width = Math.min(380, window.innerWidth - 32) + 'px';
+    if (ok) {
+      var r = tour.el.getBoundingClientRect(), th = tip.offsetHeight;
+      if (r.top < 12 || r.bottom + th + 28 > window.innerHeight) {
+        var fits = r.height + th + 60 <= window.innerHeight;
+        window.scrollBy(0, r.top - (fits ? 24 : 16));
+      }
+    }
+    T.classList.toggle('animate', !first);
+    layoutTour();
+    var firstInput = inter && tour.el && (tour.el.matches('button,input,textarea') ? tour.el : tour.el.querySelector('button,input,textarea'));
+    (firstInput || $('#tourNext')).focus({ preventScroll: true });
+    if (st.demo) tour.timer = setTimeout(st.demo, 1100);
+  }
+  function tourNext() {
+    if (tour.i >= STEPS.length - 1) endTour(); else showStep(tour.i + 1);
+  }
+  function startTour() {
+    if (tour.on) return;
+    tour.on = true;
+    tour.completed = {};
+    tour.prevTab = ui.tab;
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+    T.hidden = false;
+    showStep(0, true);
+  }
+  function endTour() {
+    if (!tour.on) return;
+    tour.on = false;
+    clearTimeout(tour.timer);
+    T.hidden = true;
+    ui.tab = tour.prevTab;
+    renderHead();
+    if (ui.tab === 'study') renderStudy();
+    $('#tourBtn').focus({ preventScroll: true });
+  }
+  /* Returns true when the tour handled the key. Keys typed into the page itself (the student's turn) pass through. */
+  function tourKey(e) {
+    var t = e.target;
+    var inTip = !!(t && $('#tourTip').contains(t));
+    if (!inTip && t && t.closest && t.closest('input,textarea,select,button,[role="button"]')) return false;
+    if (e.key === 'Escape') { e.preventDefault(); endTour(); return true; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); tourNext(); return true; }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); if (tour.i > 0) showStep(tour.i - 1); return true; }
+    var waiting = !!STEPS[tour.i].done && !tour.completed[tour.i];
+    if (e.key === 'Tab' && inTip && !waiting) {
+      var btns = ['#tourSkip', '#tourBack', '#tourNext'].map(function (s) { return $(s); }).filter(function (b) { return !b.hidden; });
+      var idx = btns.indexOf(document.activeElement);
+      e.preventDefault();
+      var n = e.shiftKey ? (idx <= 0 ? btns.length - 1 : idx - 1) : (idx === -1 || idx === btns.length - 1 ? 0 : idx + 1);
+      btns[n].focus({ preventScroll: true });
+      return true;
+    }
+    return false;
+  }
+  /* An interactive step finishes when the student's own action changes the data. */
+  function checkDone() {
+    if (!tour.on) return;
+    var st = STEPS[tour.i], i = tour.i;
+    if (!st.done || tour.completed[i] || !st.done(tour.base)) return;
+    tour.completed[i] = true;
+    var hint = $('#tourHint');
+    hint.hidden = false;
+    hint.className = 'tip-hint ok';
+    hint.textContent = st.success;
+    $('#tourHole').classList.remove('live');
+    var nb = $('#tourNext');
+    nb.textContent = 'Next';
+    nb.classList.add('primary');
+    nb.classList.remove('ghost');
+    clearTimeout(tour.timer);
+    tour.timer = setTimeout(function () { if (tour.on && tour.i === i) tourNext(); }, 1200);
+  }
+  function relayout() {
+    if (!tour.on) return;
+    T.classList.remove('animate');
+    cancelAnimationFrame(tour.raf);
+    tour.raf = requestAnimationFrame(layoutTour);
+  }
+  new MutationObserver(function () {
+    if (!tour.on) return;
+    checkDone();
+    relayout();
+  }).observe($('.wrap'), { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'aria-pressed'] });
+  window.addEventListener('resize', relayout);
+  window.addEventListener('scroll', relayout, { passive: true });
+
+  /* ---------- start ---------- */
+  var local = null;
+  try { local = normalize(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) {}
+  S = local || seed();
+  renderAll();
+  setStatus('local');
+  connect();
+  try { if (!localStorage.getItem(TOUR_KEY)) setTimeout(startTour, 500); } catch (e) {}
+})();
+</script>
+
+</body></html>
